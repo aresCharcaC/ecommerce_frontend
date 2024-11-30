@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProductCard from '../components/ProductCard';
+import PriceFilter from '../components/PriceFilter';
 
 function Home({ onAddToCart }) {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [priceRange, setPriceRange] = useState([0, 1000]); // Valores iniciales por defecto para el filtrado
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,6 +21,15 @@ function Home({ onAddToCart }) {
         }
         const response = await axios.get(url);
         setProducts(response.data);
+
+        // Establecer el rango de precios inicial basado en los productos
+        const prices = response.data.map(product => product.current_price);
+        const minPrice = Math.floor(Math.min(...prices));
+        const maxPrice = Math.ceil(Math.max(...prices));
+        setPriceRange([minPrice, maxPrice]);
+
+        filterProducts(response.data, [minPrice, maxPrice]);
+
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -36,6 +48,24 @@ function Home({ onAddToCart }) {
     fetchCategories();
     fetchData();
   }, [selectedCategory]);
+
+//Filtro
+const filterProducts = (productList, range) => {
+  const filtered = productList.filter(product => {
+    const price = product.current_price;
+    return price >= range[0] && price <= range[1];
+  });
+  setFilteredProducts(filtered);
+};
+
+const handlePriceRangeChange = (newRange) => {
+  setPriceRange(newRange);
+  filterProducts(products, newRange);
+};
+
+const prices = products.map(product => product.current_price);
+const minPrice = Math.floor(Math.min(...prices));
+const maxPrice = Math.ceil(Math.max(...prices));
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -66,23 +96,37 @@ function Home({ onAddToCart }) {
         ))}
       </div>
 
-      {/* Loading state */}
-      {loading ? (
-        <div className="text-center py-10">
-          <p>Cargando productos...</p>
+      {/* Seccion de filtros */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Sidebar con filtros */}
+        <div className="w-full md:w-64">
+          <PriceFilter
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            currentRange={priceRange}
+            onChange={handlePriceRangeChange}
+          />
         </div>
-      ) : (
-        /* Grid de productos */
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map(product => (
-            <ProductCard 
-              key={product.id} 
-              product={product}
-              onAddToCart={onAddToCart} 
-            />
-          ))}
+
+     {/* Grid de productos */}
+     <div className="flex-1">
+          {loading ? (
+            <div className="text-center py-10">
+              <p>Cargando productos...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={onAddToCart}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
