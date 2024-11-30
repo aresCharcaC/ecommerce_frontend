@@ -6,6 +6,7 @@ import RegisterForm from './components/RegisterForm';
 import CartModal from './components/CartModal';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
+import AdvertCarousel from './components/AdvertCarousel';
 import './App.css';
 
 function App() {
@@ -89,7 +90,12 @@ function App() {
         <Routes>
           <Route 
             path="/" 
-            element={<Home onAddToCart={handleAddToCart} />} 
+            element={
+              <>
+              <AdvertCarousel />
+              <Home onAddToCart={handleAddToCart} />
+            </>
+          } 
           />
           <Route 
             path="/register" 
