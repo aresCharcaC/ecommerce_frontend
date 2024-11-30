@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -9,7 +9,11 @@ import OrderSuccessPage from './pages/OrderSuccessPage';
 import './App.css';
 
 function App() {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    // Recupera los datos del carrito desde localStorage
+    const savedCart = localStorage.getItem('cartItems');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
@@ -25,6 +29,12 @@ function App() {
     ? subtotal - appliedCoupon.discount_amount 
     : subtotal;
 
+   // Persistir el carrito en localStorage cuando cambie el estado del carrito
+   useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+    
   const handleAddToCart = (product) => {
     const existingItem = cartItems.find(item => item.id === product.id);
     if (existingItem) {
